@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <div style="width: 80px; height: 80px; background: var(--accent-color); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--bg-color); font-weight: bold;">
+                {{ current_user.username[0] | upper }}
+            </div>
+            <h3>{{ current_user.username }}</h3>
+            <p style="font-size: 0.8rem;">{{ current_user.email }}</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-link active">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="{{ url_for('design_recommendations') }}" class="sidebar-link">
+                <i class="fas fa-magic"></i> New Design
+            </a>
+            <a href="{{ url_for('room_analysis') }}" class="sidebar-link">
+                <i class="fas fa-chart-pie"></i> Analysis
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-heart"></i> Saved Items
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </nav>
+    </aside>
+    
+    <main class="dashboard-main">
+        <div style="margin-bottom: 3rem;">
+            <h1>Dashboard</h1>
+            <p>Welcome back! Here's what's happening with your designs.</p>
+        </div>
+        
+        <div class="stats-grid mb-2">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+                <h3>{{ stats.designs_count }}</h3>
+                <p>Total Designs</p>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-heart"></i></div>
+                <h3>{{ stats.saved_items }}</h3>
+                <p>Saved Items</p>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <h3>{{ stats.pending_analysis }}</h3>
+                <p>Pending Analysis</p>
+            </div>
+            
+            <div class="stat-card" style="background: linear-gradient(135deg, var(--bg-color), var(--primary-light)); border: 1px dashed var(--accent-color); cursor: pointer;" onclick="window.location.href='{{ url_for('design_recommendations') }}'">
+                <div class="stat-icon" style="margin-bottom: 0.5rem;"><i class="fas fa-plus"></i></div>
+                <h3 style="font-size: 1.2rem;">Create New</h3>
+            </div>
+        </div>
+        
+        <h2 class="mb-2">Recent Projects</h2>
+        
+        {% if recent_projects %}
+        <div class="projects-grid">
+            {% for project in recent_projects %}
+            <div class="project-card">
+                <div class="card-image">
+                    <img src="{{ url_for('static', filename='images/designs/' + (project.image_path if project.image_path else 'placeholder.jpg')) }}" 
+                         alt="{{ project.room_type }}"
+                         onerror="this.src='https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'">
+                </div>
+                <div class="card-content">
+                    <h3 style="font-size: 1.2rem;">{{ project.room_type | title }}</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                        <span style="background: rgba(100,255,218,0.1); color: var(--accent-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">{{ project.style | title }}</span>
+                        <small style="color: var(--text-secondary);">{{ project.created_at.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 4rem; background-color: var(--primary-light); border-radius: var(--border-radius); border: 1px dashed var(--text-secondary);">
+            <i class="fas fa-folder-open" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+            <h3>No designs yet</h3>
+            <p>Start your first interior design project today!</p>
+            <a href="{{ url_for('design_recommendations') }}" class="btn btn-accent" style="margin-top: 1rem;">Create Design</a>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

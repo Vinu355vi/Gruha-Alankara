@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <!-- Login Card -->
+    <div class="auth-card" id="loginCard" style="display: {{ 'none' if request.args.get('show_register') else 'block' }};">
+        <div class="auth-header">
+            <i class="fas fa-couch"></i>
+            <h2>Welcome Back</h2>
+            <p>Sign in to continue your design journey</p>
+        </div>
+        
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="loginEmail" required placeholder="Enter your email">
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" required placeholder="Enter your password">
+            </div>
+            
+            <div id="loginError" style="color: var(--error); margin-bottom: 1rem; font-size: 0.9rem; display: none; text-align: center;"></div>
+            
+            <button type="submit" class="btn btn-accent btn-block">Sign In</button>
+        </form>
+        
+        <div class="auth-divider">or continue with</div>
+        
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <button class="btn btn-secondary btn-block"><i class="fab fa-google"></i> Google</button>
+            <button class="btn btn-secondary btn-block"><i class="fab fa-facebook-f"></i> Facebook</button>
+        </div>
+        
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="#" onclick="toggleAuth('register')">Sign Up</a></p>
+        </div>
+    </div>
+
+    <!-- Register Card -->
+    <div class="auth-card" id="registerCard" style="display: {{ 'block' if request.args.get('show_register') else 'none' }};">
+        <div class="auth-header">
+            <i class="fas fa-user-plus"></i>
+            <h2>Create Account</h2>
+            <p>Join Gruha Alankara today</p>
+        </div>
+        
+        <form onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="regUsername" required placeholder="Choose a username">
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="regEmail" required placeholder="Enter your email">
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="regPassword" required placeholder="Create a password">
+            </div>
+            
+            <div id="registerError" style="color: var(--error); margin-bottom: 1rem; font-size: 0.9rem; display: none; text-align: center;"></div>
+            
+            <button type="submit" class="btn btn-accent btn-block">Create Account</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="#" onclick="toggleAuth('login')">Sign In</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleAuth(type) {
+        const loginCard = document.getElementById('loginCard');
+        const registerCard = document.getElementById('registerCard');
+        
+        if (type === 'register') {
+            loginCard.style.display = 'none';
+            registerCard.style.display = 'block';
+            history.pushState(null, '', '/register');
+        } else {
+            registerCard.style.display = 'none';
+            loginCard.style.display = 'block';
+            history.pushState(null, '', '/login');
+        }
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const errorDiv = document.getElementById('loginError');
+        
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.href = data.redirect;
+            } else {
+                errorDiv.textContent = data.message || 'Login failed';
+                errorDiv.style.display = 'block';
+            }
+        } catch (err) {
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+        }
+    }
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        const username = document.getElementById('regUsername').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const errorDiv = document.getElementById('registerError');
+        
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Registration successful! Please sign in.');
+                toggleAuth('login');
+            } else {
+                errorDiv.textContent = data.message || 'Registration failed';
+                errorDiv.style.display = 'block';
+            }
+        } catch (err) {
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}

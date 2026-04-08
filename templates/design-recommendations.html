@@ -1,0 +1,837 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="recommendations-page">
+    <!-- Hero Section -->
+    <section class="rec-hero">
+        <div class="rec-hero-content">
+            <h1>AI-Powered Design Recommendations</h1>
+            <p>Get personalized interior design suggestions based on your preferences and space</p>
+        </div>
+    </section>
+    
+    <!-- Preference Form -->
+    <section class="preference-form">
+        <div class="form-container">
+            <h2>Tell Us About Your Space</h2>
+            
+            <form id="preferenceForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Room Type</label>
+                        <select name="room_type" required>
+                            <option value="">Select room type</option>
+                            <option value="living">Living Room</option>
+                            <option value="bedroom">Bedroom</option>
+                            <option value="kitchen">Kitchen</option>
+                            <option value="dining">Dining Room</option>
+                            <option value="office">Home Office</option>
+                            <option value="bathroom">Bathroom</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Preferred Style</label>
+                        <select name="style" required>
+                            <option value="">Select style</option>
+                            <option value="modern">Modern</option>
+                            <option value="minimalist">Minimalist</option>
+                            <option value="scandinavian">Scandinavian</option>
+                            <option value="industrial">Industrial</option>
+                            <option value="bohemian">Bohemian</option>
+                            <option value="traditional">Traditional</option>
+                            <option value="contemporary">Contemporary</option>
+                            <option value="midcentury">Mid-Century Modern</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Room Width (feet)</label>
+                        <input type="number" name="width" step="0.1" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Room Length (feet)</label>
+                        <input type="number" name="length" step="0.1" min="1" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Budget Range</label>
+                        <select name="budget" required>
+                            <option value="">Select budget</option>
+                            <option value="economy">Economy (₹40,000 - ₹80,000)</option>
+                            <option value="moderate">Moderate (₹80,000 - ₹2,50,000)</option>
+                            <option value="premium">Premium (₹2,50,000 - ₹4,00,000)</option>
+                            <option value="luxury">Luxury (₹4,00,000+)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Color Preference</label>
+                        <select name="color" required>
+                            <option value="">Select preference</option>
+                            <option value="neutral">Neutral Tones</option>
+                            <option value="warm">Warm Colors</option>
+                            <option value="cool">Cool Colors</option>
+                            <option value="bold">Bold & Vibrant</option>
+                            <option value="pastel">Pastel Shades</option>
+                            <option value="monochrome">Monochrome</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Additional Preferences</label>
+                    <textarea name="preferences" rows="3" placeholder="Tell us more about your vision..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary btn-large">
+                    <i class="fas fa-magic"></i>
+                    Generate Recommendations
+                </button>
+            </form>
+        </div>
+    </section>
+    
+    <!-- Loading State -->
+    <div class="loading-state" id="loadingState" style="display: none;">
+        <div class="loader"></div>
+        <h3>AI is analyzing your preferences...</h3>
+        <p>This may take a few moments</p>
+    </div>
+    
+    <!-- Recommendations Results -->
+    <section class="recommendations-results" id="results" style="display: none;">
+        <!-- Color Palette -->
+        <div class="result-section">
+            <h2>Recommended Color Palette</h2>
+            <div class="color-palette" id="colorPalette">
+                <!-- Colors will be populated by JS -->
+            </div>
+        </div>
+        
+        <!-- Furniture Layout -->
+        <div class="result-section">
+            <h2>Optimal Furniture Layout</h2>
+            <div class="layout-container">
+                <div class="layout-3d" id="layout3D">
+                    <!-- 3D visualization will go here -->
+                    <canvas id="layoutCanvas"></canvas>
+                </div>
+                <div class="layout-list" id="furnitureList">
+                    <!-- Furniture list will be populated -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shopping Recommendations -->
+        <div class="result-section">
+            <h2>Shopping Recommendations</h2>
+            <div class="shopping-grid" id="shoppingGrid">
+                <!-- Shopping items will be populated -->
+            </div>
+        </div>
+        
+        <!-- Save Design -->
+        <div class="save-design">
+            <button class="btn-primary" onclick="saveDesign()">
+                <i class="fas fa-save"></i>
+                Save This Design
+            </button>
+            <button class="btn-secondary" onclick="viewInAR()">
+                <i class="fas fa-vr-cardboard"></i>
+                View in AR
+            </button>
+        </div>
+    </section>
+</div>
+
+
+<script src="{{ url_for('static', filename='js/design-recommendations.js') }}"></script>
+<script>
+    // Just a small helper for initializing if needed
+</script>
+
+<style media="max-width: 1px">
+/* Disabled style block to fix dark mode visibility */
+.recommendations-page {
+    padding-top: 80px;
+}
+
+.rec-hero {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.rec-hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.rec-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.rec-hero p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.preference-form {
+    padding: 4rem 2rem;
+    background: var(--light-color);
+}
+
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+}
+
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.loader {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 auto 2rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.recommendations-results {
+    padding: 4rem 2rem;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.result-section {
+    margin-bottom: 4rem;
+}
+
+.result-section h2 {
+    margin-bottom: 2rem;
+}
+
+.color-palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.color-item {
+    height: 150px;
+    border-radius: 15px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.color-item:hover {
+    transform: scale(1.05);
+}
+
+.color-code {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.8rem;
+}
+
+.layout-container {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+}
+
+.layout-3d {
+    background: var(--light-color);
+    border-radius: 15px;
+    overflow: hidden;
+    height: 400px;
+}
+
+#layoutCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.layout-list {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+}
+
+.layout-list h3 {
+    margin-bottom: 1.5rem;
+}
+
+.furniture-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.furniture-item:last-child {
+    border-bottom: none;
+}
+
+.furniture-item h4 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.furniture-item p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.furniture-item .price {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.btn-add-small {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.btn-add-small:hover {
+    transform: scale(1.1);
+}
+
+.shopping-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.shopping-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.3s ease;
+}
+
+.shopping-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.shopping-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 1.5rem;
+}
+
+.card-content h4 {
+    margin-bottom: 0.5rem;
+}
+
+.rating {
+    color: #fbbf24;
+    margin-bottom: 0.5rem;
+}
+
+.rating span {
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+}
+
+.card-content .price {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.card-content .store {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.save-design {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+}
+
+.notification {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    background: white;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    z-index: 2000;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    border-left: 4px solid var(--success-color);
+}
+
+.notification.info {
+    border-left: 4px solid var(--info-color);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .layout-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .save-design {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+/* Pattern backgrounds */
+.pattern-bg-1 {
+    background-image: url('/static/images/patterns/pattern-1.svg');
+    background-repeat: repeat;
+}
+
+.pattern-bg-2 {
+    background-image: url('/static/images/patterns/pattern-2.svg');
+    background-repeat: repeat;
+}
+
+.pattern-bg-3 {
+    background-image: url('/static/images/patterns/pattern-3.svg');
+    background-repeat: repeat;
+}
+
+.pattern-bg-4 {
+    background-image: url('/static/images/patterns/pattern-4.svg');
+    background-repeat: repeat;
+}
+
+.pattern-bg-5 {
+    background-image: url('/static/images/patterns/pattern-5.svg');
+    background-repeat: repeat;
+}
+
+/* Color palette display */
+.color-item {
+    position: relative;
+    height: 150px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.color-item:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.color-code {
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+
+.copy-color {
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 5px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.copy-color:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+/* Layout visualization */
+.layout-visualization {
+    background: var(--light-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.layout-zones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.zone-item {
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+}
+
+.zone-item strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.zone-item span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.layout-placements {
+    margin-top: 1.5rem;
+}
+
+.placement-item {
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+.placement-item strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.placement-item span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Shopping cards */
+.shopping-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.shopping-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.shopping-card:hover .card-image img {
+    transform: scale(1.1);
+}
+
+.card-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.card-content {
+    padding: 1.5rem;
+}
+
+.card-content h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.rating {
+    color: #fbbf24;
+    margin-bottom: 0.5rem;
+}
+
+.rating span {
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+}
+
+.price {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.store {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.store i {
+    margin-right: 0.25rem;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Cost breakdown */
+.cost-summary {
+    background: var(--light-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.cost-summary h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.cost-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cost-item.total {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    border-bottom: none;
+}
+
+.cost-item.monthly {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-top: 1rem;
+    border-bottom: none;
+    color: var(--success-color);
+}
+
+/* Style matches */
+.style-match-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1rem;
+}
+
+.style-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.style-header h4 {
+    font-size: 1.1rem;
+}
+
+.match-percentage {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.style-match-card p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.match-bar {
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.match-progress {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 3px;
+}
+
+/* Error message */
+.error-message {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-left: 4px solid var(--error-color);
+    border-radius: 10px;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    animation: slideDown 0.3s ease;
+}
+
+.error-message i {
+    color: var(--error-color);
+    font-size: 1.2rem;
+}
+
+.error-message button {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-actions {
+        flex-direction: column;
+    }
+    
+    .color-item {
+        height: 100px;
+    }
+    
+    .layout-zones {
+        grid-template-columns: 1fr;
+    }
+}

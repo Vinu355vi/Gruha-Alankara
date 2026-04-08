@@ -1,0 +1,1094 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="room-analysis-page">
+    <!-- Header -->
+    <section class="analysis-header">
+        <h1>AI Room Analysis</h1>
+        <p>Upload a photo of your room for instant AI-powered analysis</p>
+    </section>
+    
+    <!-- Upload Section -->
+    <section class="upload-section">
+        <div class="upload-container" id="uploadContainer">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Upload Room Photo</h3>
+            <p>Drag and drop or click to upload</p>
+            <input type="file" id="roomImage" accept="image/*" hidden>
+            <button class="btn-primary" onclick="document.getElementById('roomImage').click()">
+                Choose Photo
+            </button>
+            <p class="upload-note">Supports: JPG, PNG, GIF (Max 10MB)</p>
+        </div>
+        
+        <div class="camera-option">
+            <div class="divider">
+                <span>OR</span>
+            </div>
+            <button class="btn-secondary" onclick="openCamera()">
+                <i class="fas fa-camera"></i>
+                Take Photo with Camera
+            </button>
+        </div>
+    </section>
+    
+    <!-- Camera Preview (Hidden by default) -->
+    <section class="camera-preview" id="cameraPreview" style="display: none;">
+        <video id="cameraFeed" autoplay playsinline></video>
+        <div class="camera-controls">
+            <button class="btn-capture" onclick="capturePhoto()">
+                <i class="fas fa-camera"></i>
+            </button>
+            <button class="btn-close" onclick="closeCamera()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </section>
+    
+    <!-- Image Preview -->
+    <section class="image-preview" id="imagePreview" style="display: none;">
+        <div class="preview-container">
+            <img id="previewImage" src="" alt="Room Preview">
+            <div class="preview-actions">
+                <button class="btn-secondary" onclick="resetUpload()">
+                    <i class="fas fa-redo"></i>
+                    Choose Another
+                </button>
+                <button class="btn-primary" onclick="analyzeRoom()">
+                    <i class="fas fa-chart-bar"></i>
+                    Analyze Room
+                </button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Analysis Loading -->
+    <section class="analysis-loading" id="analysisLoading" style="display: none;">
+        <div class="loader"></div>
+        <h3>AI is analyzing your room...</h3>
+        <p>Detecting dimensions, furniture, and lighting conditions</p>
+        <div class="loading-progress">
+            <div class="progress-bar">
+                <div class="progress" id="analysisProgress"></div>
+            </div>
+            <span id="progressText">0%</span>
+        </div>
+    </section>
+    
+    <!-- Analysis Results -->
+    <section class="analysis-results" id="analysisResults" style="display: none;">
+        <!-- Room Dimensions -->
+        <div class="results-card">
+            <h2><i class="fas fa-ruler"></i> Room Dimensions</h2>
+            <div class="dimensions-grid">
+                <div class="dimension-item">
+                    <span class="label">Width</span>
+                    <span class="value" id="roomWidth">0</span>
+                    <span class="unit">feet</span>
+                </div>
+                <div class="dimension-item">
+                    <span class="label">Length</span>
+                    <span class="value" id="roomLength">0</span>
+                    <span class="unit">feet</span>
+                </div>
+                <div class="dimension-item">
+                    <span class="label">Height</span>
+                    <span class="value" id="roomHeight">0</span>
+                    <span class="unit">feet</span>
+                </div>
+                <div class="dimension-item">
+                    <span class="label">Area</span>
+                    <span class="value" id="roomArea">0</span>
+                    <span class="unit">sq ft</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lighting Analysis -->
+        <div class="results-card">
+            <h2><i class="fas fa-sun"></i> Lighting Conditions</h2>
+            <div class="lighting-analysis">
+                <div class="lighting-meter">
+                    <div class="meter-label">
+                        <span>Natural Light</span>
+                        <span id="naturalLightValue">80%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" id="naturalLightBar" style="width: 80%"></div>
+                    </div>
+                </div>
+                <div class="lighting-meter">
+                    <div class="meter-label">
+                        <span>Artificial Light</span>
+                        <span id="artificialLightValue">60%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" id="artificialLightBar" style="width: 60%"></div>
+                    </div>
+                </div>
+                <div class="lighting-recommendation" id="lightingRecommendation">
+                    <i class="fas fa-lightbulb"></i>
+                    <p>Good natural lighting. Consider adding warm ambient lighting for evenings.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detected Furniture -->
+        <div class="results-card">
+            <h2><i class="fas fa-couch"></i> Detected Furniture</h2>
+            <div class="furniture-detection">
+                <div class="detection-list" id="furnitureList">
+                    <!-- Will be populated by JS -->
+                </div>
+                <div class="detection-visualization">
+                    <canvas id="detectionCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Color Analysis -->
+        <div class="results-card">
+            <h2><i class="fas fa-palette"></i> Color Analysis</h2>
+            <div class="color-analysis">
+                <div class="dominant-colors" id="dominantColors">
+                    <!-- Will be populated by JS -->
+                </div>
+                <div class="color-recommendations">
+                    <h3>Recommended Color Palette</h3>
+                    <div class="recommended-palette" id="recommendedPalette">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Style Suggestions -->
+        <div class="results-card">
+            <h2><i class="fas fa-magic"></i> Style Suggestions</h2>
+            <div class="style-suggestions" id="styleSuggestions">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+        
+        <!-- Design Visualization -->
+        <div class="results-card" id="visualizationSection" style="display:none;">
+            <h2><i class="fas fa-paint-brush"></i> AI Design Visualization</h2>
+            <p>Select a style to generate a visual preview of your room with detected changes.</p>
+            <div class="style-buttons" id="visualizationStyles" style="margin-bottom: 1rem;">
+                <!-- Buttons will be injected here -->
+            </div>
+            <div class="visualization-preview" id="visualizationPreview" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <div id="visLoading" style="display:none; text-align: center;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Generating design preview...</p>
+                </div>
+                <img id="generatedImage" src="" alt="Generated Design" style="width:100%; border-radius:8px; display:none;">
+                <div id="visPlaceholder" style="color: #6c757d;">Select a style above to visualize</div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="results-actions">
+            <button class="btn-primary" onclick="getDesignRecommendations()">
+                <i class="fas fa-pencil-ruler"></i>
+                Get Design Recommendations
+            </button>
+            <button class="btn-secondary" onclick="viewInAR()">
+                <i class="fas fa-vr-cardboard"></i>
+                View in AR
+            </button>
+            <button class="btn-outline" onclick="exportAnalysis()">
+                <i class="fas fa-download"></i>
+                Export Report
+            </button>
+        </div>
+    </section>
+</div>
+
+<script>
+let uploadedImage = null;
+let currentAnalysisImageUrl = null;
+
+function generateDesign(style) {
+    if (!currentAnalysisImageUrl) {
+        alert("No room analysis available.");
+        return;
+    }
+    
+    const loading = document.getElementById('visLoading');
+    const img = document.getElementById('generatedImage');
+    const placeholder = document.getElementById('visPlaceholder');
+    
+    loading.style.display = 'block';
+    img.style.display = 'none';
+    placeholder.style.display = 'none';
+    
+    fetch('/api/generate-design-image', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            image_url: currentAnalysisImageUrl,
+            style: style
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.generated_image_url) {
+            img.src = data.generated_image_url;
+            img.style.display = 'block';
+        } else {
+            alert('Could not generate design: ' + (data.error || 'Unknown error'));
+            placeholder.style.display = 'block';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error generating design');
+        placeholder.style.display = 'block';
+    })
+    .finally(() => {
+        loading.style.display = 'none';
+    });
+}
+
+document.getElementById('roomImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedImage = e.target.result;
+            showImagePreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function showImagePreview(imageSrc) {
+    document.querySelector('.upload-section').style.display = 'none';
+    document.getElementById('imagePreview').style.display = 'block';
+    document.getElementById('previewImage').src = imageSrc;
+}
+
+function resetUpload() {
+    document.querySelector('.upload-section').style.display = 'block';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('analysisResults').style.display = 'none';
+    document.getElementById('roomImage').value = '';
+}
+
+function openCamera() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function(stream) {
+                document.querySelector('.upload-section').style.display = 'none';
+                document.getElementById('cameraPreview').style.display = 'block';
+                const video = document.getElementById('cameraFeed');
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function(error) {
+                alert('Camera access denied or not available');
+            });
+    }
+}
+
+function closeCamera() {
+    const stream = document.getElementById('cameraFeed').srcObject;
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    document.getElementById('cameraPreview').style.display = 'none';
+    document.querySelector('.upload-section').style.display = 'block';
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraFeed');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = canvas.toDataURL('image/jpeg');
+    uploadedImage = imageData;
+    
+    closeCamera();
+    showImagePreview(imageData);
+}
+
+function analyzeRoom() {
+    // Hide preview, show loading
+    const imagePreview = document.getElementById('imagePreview');
+    const loading = document.getElementById('analysisLoading');
+    const results = document.getElementById('analysisResults');
+    
+    // Check if we have an image
+    const fileInput = document.getElementById('roomImage');
+    let file = null;
+    
+    if (fileInput.files.length > 0) {
+        file = fileInput.files[0];
+    } else if (uploadedImage) { // From camera
+         // Convert base64 to blob
+         const byteString = atob(uploadedImage.split(',')[1]);
+         const ab = new ArrayBuffer(byteString.length);
+         const ia = new Uint8Array(ab);
+         for (let i = 0; i < byteString.length; i++) {
+             ia[i] = byteString.charCodeAt(i);
+         }
+         file = new Blob([ab], { type: 'image/jpeg' });
+    }
+    
+    if (!file) {
+        alert("Please select or capture an image first.");
+        return;
+    }
+
+    loading.style.display = 'block';
+    results.style.display = 'none';
+
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append('room_image', file);
+    
+    // Send to backend
+    fetch('/api/analyze-room', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Analysis failed');
+        return response.json();
+    })
+    .then(data => {
+        loading.style.display = 'none';
+        results.style.display = 'block';
+        displayAnalysisResults(data);
+    })
+    .catch(error => {
+         loading.style.display = 'none';
+         alert('Error during analysis: ' + error.message);
+         console.error(error);
+    });
+}
+
+function displayAnalysisResults(data) {
+    // Store original image URL
+    if (data.image_url) {
+        currentAnalysisImageUrl = data.image_url;
+        const visSection = document.getElementById('visualizationSection');
+        const visStyles = document.getElementById('visualizationStyles');
+        const styles = data.recommended_styles || ['Modern', 'Minimalist', 'Scandinavian'];
+        
+        visSection.style.display = 'block';
+        visStyles.innerHTML = styles.map(style => 
+            `<button class="btn-secondary" onclick="generateDesign('${style}')" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">Visualize ${style}</button>`
+        ).join('');
+        
+        // Add Reset Original button
+        visStyles.innerHTML += `<button class="btn-outline" onclick="showImagePreview(currentAnalysisImageUrl); document.getElementById('generatedImage').style.display='none'; document.getElementById('visPlaceholder').style.display='block';" style="margin-right: 0.5rem;">Reset</button>`;
+    }
+
+    // Set dimensions
+    const dims = data.dimensions || {};
+    document.getElementById('roomWidth').textContent = (dims.width || 0).toFixed(1);
+    document.getElementById('roomLength').textContent = (dims.length || 0).toFixed(1);
+    document.getElementById('roomHeight').textContent = (dims.height || 0).toFixed(1);
+    document.getElementById('roomArea').textContent = (dims.area || 0).toFixed(1);
+    
+    // Set lighting
+    const lighting = data.lighting_details || { natural: 50, artificial: 50 };
+    document.getElementById('naturalLightValue').textContent = Math.round(lighting.natural) + '%';
+    document.getElementById('naturalLightBar').style.width = lighting.natural + '%';
+    document.getElementById('artificialLightValue').textContent = Math.round(lighting.artificial) + '%';
+    document.getElementById('artificialLightBar').style.width = lighting.artificial + '%';
+    
+    // Recommendations
+    const recs = data.recommended_styles || [];
+    const recElement = document.getElementById('lightingRecommendation');
+    if(recs.length > 0) {
+         recElement.innerHTML = `<i class="fas fa-lightbulb"></i> <p>Based on your room, we recommend: <strong>${recs.join(', ')}</strong> styles.</p>`;
+    }
+    
+    // Furniture List
+    const furnitureList = document.getElementById('furnitureList');
+    furnitureList.innerHTML = '';
+    const items = data.furniture_detected || [];
+    
+    if (items.length === 0) {
+        furnitureList.innerHTML = '<div class="detection-item"><span>No furniture detected</span></div>';
+    } else {
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'detection-item';
+            div.innerHTML = `
+                <div class="detection-info">
+                    <span class="item-name"><strong>${item.type}</strong></span>
+                    <span class="item-confidence">${Math.round(item.confidence * 100)}% confidence</span>
+                </div>
+                <div class="confidence-bar">
+                    <div style="width: ${Math.round(item.confidence * 100)}%; background: var(--primary-color); height: 100%; border-radius: 4px;"></div>
+                </div>
+            `;
+            furnitureList.appendChild(div);
+        });
+    }
+
+    // Color Analysis - Dominant Colors
+    const dominantColors = document.getElementById('dominantColors');
+    const colorSuggestions = data.color_palette_suggestions || [];
+    
+    if (dominantColors && colorSuggestions.length > 0) {
+        dominantColors.innerHTML = colorSuggestions.slice(0, 5).map(c => {
+             // Handle both 'percentage' propery or mocked NaN cases
+             let pct = c.percentage;
+             if (pct === undefined || isNaN(pct)) {
+                 pct = '20'; // Default fallback
+             }
+             return `
+            <div class="color-block">
+                <div class="color-sample" style="background: ${c.hex};"></div>
+                <span class="color-percentage">${Math.round(pct)}%</span>
+            </div>
+        `}).join('');
+    }
+
+    // Recommended Palette
+    const recommendedPalette = document.getElementById('recommendedPalette');
+    if(recommendedPalette && (data.recommended_palette || data.color_palette_suggestions)) {
+         let paletteItems = [];
+         
+         if (data.recommended_palette && data.recommended_palette.length > 0) {
+             // Use AI generated palette
+             paletteItems = data.recommended_palette;
+         } else {
+             // Fallback
+             const baseColor = data.color_palette_suggestions[0]?.hex || '#cccccc';
+             paletteItems = [
+                 {name: 'Base', hex: baseColor},
+                 {name: 'Light', hex: '#ffffff'},
+                 {name: 'Contrast', hex: '#333333'}
+             ];
+         }
+         
+         recommendedPalette.innerHTML = paletteItems.map(c => `
+            <div class="palette-item">
+                <div class="palette-sample" style="background: ${c.hex};"></div>
+                <span>${c.name}</span>
+            </div>
+         `).join('');
+    }
+
+    // Style Suggestions
+    const styleSuggestions = document.getElementById('styleSuggestions');
+    if (styleSuggestions && data.recommended_styles) {
+        styleSuggestions.innerHTML = data.recommended_styles.map((style, index) => `
+            <div class="style-card">
+                <div class="style-header">
+                    <h4>${style}</h4>
+                    <span class="match-score">${90 - index * 10}% match</span>
+                </div>
+                <p>Based on your room's layout and detected elements.</p>
+                <div class="match-bar">
+                    <div class="match-progress" style="width: ${90 - index * 10}%"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function getDesignRecommendations() {
+    window.location.href = '/design-recommendations';
+}
+
+function viewInAR() {
+    window.location.href = '/ar-viewer';
+}
+
+function exportAnalysis() {
+    // Check if jsPDF is loaded
+    if (!window.jspdf) {
+        alert("PDF generator is loading. Please try again in a moment.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(44, 62, 80); // #2c3e50
+    doc.text("Room Analysis Report", 20, 20);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Generated by Gruha Alankara on ${new Date().toLocaleDateString()}`, 20, 30);
+    
+    let yPos = 50;
+
+    // Room Dimensions section
+    doc.setFontSize(16);
+    doc.setTextColor(44, 62, 80);
+    doc.text("Room Dimensions", 20, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    
+    // Get values from DOM
+    const width = document.getElementById('roomWidth').innerText;
+    const length = document.getElementById('roomLength').innerText;
+    const height = document.getElementById('roomHeight').innerText;
+    const area = document.getElementById('roomArea').innerText;
+    
+    doc.text(`Width: ${width} feet`, 30, yPos);
+    yPos += 7;
+    doc.text(`Length: ${length} feet`, 30, yPos);
+    yPos += 7;
+    doc.text(`Height: ${height} feet`, 30, yPos);
+    yPos += 7;
+    doc.text(`Total Area: ${area} sq ft`, 30, yPos);
+    yPos += 15;
+
+    // Lighting section
+    doc.setFontSize(16);
+    doc.setTextColor(44, 62, 80);
+    doc.text("Lighting Analysis", 20, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    const naturalLight = document.getElementById('naturalLightValue').innerText;
+    const artificialLight = document.getElementById('artificialLightValue').innerText;
+    
+    doc.text(`Natural Light: ${naturalLight}`, 30, yPos);
+    yPos += 7;
+    doc.text(`Artificial Light: ${artificialLight}`, 30, yPos);
+    yPos += 15;
+
+    // Analysis Notes
+    const recommendation = document.getElementById('lightingRecommendation').innerText;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(100);
+    // Split text to fit width
+    const splitRecommendation = doc.splitTextToSize(`Note: ${recommendation}`, 170);
+    doc.text(splitRecommendation, 20, yPos);
+    
+    // Save the PDF
+    doc.save("gruha-alankara-report.pdf");
+}
+</script>
+
+<style media="max-width: 1px">
+/* Disabled style block to fix dark mode visibility */
+.room-analysis-page {
+    padding: 100px 2rem 2rem;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.analysis-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.analysis-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.analysis-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.upload-section {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.upload-container {
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    padding: 4rem 2rem;
+    border: 3px dashed var(--border-color);
+    border-radius: 20px;
+    background: var(--light-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-container:hover {
+    border-color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.upload-container i {
+    font-size: 4rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.upload-container h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-container p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.upload-note {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.divider {
+    position: relative;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 45%;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.divider::before {
+    left: 0;
+}
+
+.divider::after {
+    right: 0;
+}
+
+.divider span {
+    background: white;
+    padding: 0 1rem;
+    color: var(--text-secondary);
+}
+
+.camera-preview {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+}
+
+.camera-preview video {
+    width: 100%;
+    display: block;
+}
+
+.camera-controls {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1rem;
+    z-index: 10;
+}
+
+.btn-capture {
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background: white;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-capture:hover {
+    transform: scale(1.1);
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-close {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.8);
+    color: var(--error-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-close:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.image-preview {
+    margin-bottom: 3rem;
+}
+
+.preview-container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.preview-container img {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    margin-bottom: 2rem;
+}
+
+.preview-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.analysis-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--light-color);
+    border-radius: 20px;
+    margin-bottom: 3rem;
+}
+
+.analysis-loading .loader {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 auto 2rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-progress {
+    max-width: 400px;
+    margin: 2rem auto 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.loading-progress .progress-bar {
+    flex: 1;
+    height: 10px;
+    background: var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.loading-progress .progress {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.analysis-results {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.results-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.results-card h2 {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.results-card h2 i {
+    color: var(--primary-color);
+}
+
+.dimensions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+}
+
+.dimension-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--light-color);
+    border-radius: 15px;
+}
+
+.dimension-item .label {
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.dimension-item .value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.2;
+}
+
+.dimension-item .unit {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.lighting-meter {
+    margin-bottom: 1.5rem;
+}
+
+.meter-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.meter-label span:first-child {
+    color: var(--text-secondary);
+}
+
+.meter-label span:last-child {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.lighting-recommendation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-color);
+    border-radius: 10px;
+    margin-top: 1rem;
+}
+
+.lighting-recommendation i {
+    font-size: 1.5rem;
+    color: #fbbf24;
+}
+
+.lighting-recommendation p {
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.furniture-detection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.detection-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detection-item {
+    padding: 1rem;
+    background: var(--light-color);
+    border-radius: 10px;
+}
+
+.detection-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.detection-info .position {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.confidence {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.confidence-bar {
+    height: 6px;
+    background: var(--gradient-primary);
+    border-radius: 3px;
+    flex: 1;
+}
+
+.confidence span {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    min-width: 45px;
+}
+
+.detection-visualization {
+    background: var(--light-color);
+    border-radius: 10px;
+    height: 300px;
+    position: relative;
+    overflow: hidden;
+}
+
+#detectionCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.color-analysis {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.dominant-colors {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.color-block {
+    text-align: center;
+}
+
+.color-sample {
+    height: 100px;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.color-percentage {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.recommended-palette {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.palette-item {
+    text-align: center;
+}
+
+.palette-sample {
+    height: 80px;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.palette-item span {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.style-suggestions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.style-card {
+    padding: 1.5rem;
+    background: var(--light-color);
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.style-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.style-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.style-header h4 {
+    font-size: 1.1rem;
+}
+
+.match-score {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.style-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.match-bar {
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.match-progress {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 3px;
+}
+
+.results-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .furniture-detection,
+    .color-analysis {
+        grid-template-columns: 1fr;
+    }
+    
+    .dominant-colors {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    
+    .results-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

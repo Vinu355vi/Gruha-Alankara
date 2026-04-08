@@ -1,0 +1,376 @@
+
+/* --- Design Recommendations Page Styles --- */
+
+/* Page Layout */
+.recommendations-page {
+    padding-top: calc(var(--nav-height) + 2rem);
+    padding-bottom: 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 90%;
+}
+
+/* Hero Section */
+.rec-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, rgba(17, 34, 64, 0.8) 0%, rgba(10, 25, 47, 0.9) 100%);
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.rec-hero-content h1 {
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, var(--text-primary), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.rec-hero-content p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    margin-top: 2rem;
+    border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.loader {
+    width: 50px;
+    height: 50px;
+    border: 3px solid var(--primary-lighter);
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Recommendations Results Container */
+.recommendations-results {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Result Sections */
+.result-section {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+}
+
+.result-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.result-section h2::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 24px;
+    background: var(--accent-color);
+    border-radius: 2px;
+}
+
+/* Color Palette Section */
+.color-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1.5rem 0 2.5rem 0;
+}
+
+.color-item {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.color-item:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.color-code {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.color-item:hover .color-code {
+    opacity: 1;
+}
+
+/* Furniture Layout Section */
+.layout-container {
+    display: flex;
+    flex-wrap: wrap; /* Wrap on smaller screens */
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.layout-3d {
+    flex: 2; /* 2/3 width on large screens */
+    height: 500px;
+    background: #000;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(100, 255, 218, 0.2);
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.05);
+}
+
+.layout-3d canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+.layout-list {
+    flex: 1; /* 1/3 width */
+    min-width: 300px;
+    height: 500px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) var(--primary-lighter);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Furniture List Section */
+.furniture-item {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: var(--transition);
+    flex-shrink: 0; /* Prevent squishing */
+}
+
+.furniture-item h4 {
+    margin: 0 0 0.5rem 0;
+}
+
+.item-details {
+    flex: 1; /* Take remaining space */
+    min-width: 200px;
+}
+
+.furniture-item:hover {
+    background: var(--primary-lighter);
+    transform: translateX(5px);
+}
+
+.item-details h4 {
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+    font-size: 1.1rem;
+}
+
+.item-details p {
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.item-details .price {
+    color: var(--accent-color);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-top: 0.5rem;
+}
+
+.btn-add-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(100, 255, 218, 0.1);
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-add-small:hover {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    transform: rotate(90deg);
+}
+
+/* Save Design Section */
+.save-design {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Shopping Recommendations Grid */
+.shopping-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.shopping-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    min-height: 400px; /* Ensure card has height */
+}
+
+/* Image fallback/container */
+.shopping-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    background-color: #2a2a2a; /* Placeholder color if image fails */
+    min-height: 200px;
+    display: block; /* Remove inline gap */
+}
+
+.shopping-card:hover img {
+    transform: scale(1.05);
+}
+
+.card-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.card-content h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.rating {
+    color: var(--gold);
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rating span {
+    color: var(--text-secondary);
+}
+
+.card-content .price {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.card-content .store {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-small {
+    margin-top: auto;
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .recommendations-page {
+        width: 95%;
+        padding-top: calc(var(--nav-height) + 1rem);
+    }
+
+    .layout-container {
+        flex-direction: column;
+    }
+    
+    .layout-3d, .layout-list {
+        width: 100%;
+        min-width: 0; /* Override min-width */
+    }
+
+    .layout-3d {
+        height: 300px; /* Smaller height on mobile */
+    }
+    
+    .furniture-item {
+        flex-direction: row; /* Keep row for mobile but maybe adjust padding */
+    }
+    
+    .shopping-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .save-design {
+        flex-direction: column;
+    }
+}

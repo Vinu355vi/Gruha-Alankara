@@ -1,0 +1,838 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ar-viewer">
+    <div class="ar-header">
+        <h1>Augmented Reality Viewer</h1>
+        <p>Place virtual furniture in your actual space</p>
+    </div>
+    
+    <div class="ar-container">
+        <!-- AR Canvas -->
+        <div class="ar-canvas" id="arCanvas">
+            <div class="ar-placeholder">
+                <i class="fas fa-vr-cardboard"></i>
+                <h3>Ready to visualize?</h3>
+                <p>Point your camera at the room to start</p>
+                <button class="btn-primary" onclick="startAR()">
+                    <i class="fas fa-play"></i> Start AR
+                </button>
+            </div>
+            
+            <!-- AR Controls -->
+            <div class="ar-controls" id="arControls" style="display: none;">
+                <div class="control-group">
+                    <button class="control-btn" onclick="rotateLeft()">
+                        <i class="fas fa-undo-alt"></i>
+                    </button>
+                    <button class="control-btn" onclick="rotateRight()">
+                        <i class="fas fa-redo-alt"></i>
+                    </button>
+                </div>
+                
+                <div class="control-group">
+                    <button class="control-btn" onclick="scaleUp()">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <button class="control-btn" onclick="scaleDown()">
+                        <i class="fas fa-minus-circle"></i>
+                    </button>
+                </div>
+                
+                <button class="control-btn capture" onclick="captureAR()">
+                    <i class="fas fa-camera"></i>
+                </button>
+                
+                <button class="control-btn close" onclick="stopAR()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- AR Status -->
+            <div class="ar-status" id="arStatus" style="display: none;">
+                <div class="status-indicator"></div>
+                <span>Tracking room...</span>
+            </div>
+        </div>
+        
+        <!-- Furniture Library -->
+        <div class="furniture-library">
+            <h3>Furniture Library</h3>
+            <div class="library-categories">
+                <button class="category-btn active" data-category="all">All</button>
+                <button class="category-btn" data-category="sofas">Sofas</button>
+                <button class="category-btn" data-category="tables">Tables</button>
+                <button class="category-btn" data-category="chairs">Chairs</button>
+                <button class="category-btn" data-category="lights">Lights</button>
+                <button class="category-btn" data-category="decor">Decor</button>
+            </div>
+            
+            <div class="library-items">
+                <!-- Sofas -->
+                <div class="library-item" data-category="sofas" data-model="modern_sofa" onclick="selectFurniture('modern_sofa')">
+                    <img src="{{ url_for('static', filename='images/furniture/modern-sofa.jpg') }}" alt="Modern Sofa">
+                    <div class="item-info">
+                        <h4>Modern Sofa</h4>
+                        <p>₹47,920</p>
+                    </div>
+                </div>
+                
+                <div class="library-item" data-category="sofas" data-model="sectional_sofa" onclick="selectFurniture('sectional_sofa')">
+                    <img src="{{ url_for('static', filename='images/furniture/sectional-sofa.jpg') }}" alt="Sectional Sofa">
+                    <div class="item-info">
+                        <h4>Sectional Sofa</h4>
+                        <p>₹71,920</p>
+                    </div>
+                </div>
+                
+                <!-- Tables -->
+                <div class="library-item" data-category="tables" data-model="coffee_table" onclick="selectFurniture('coffee_table')">
+                    <img src="{{ url_for('static', filename='images/furniture/coffee-table.jpg') }}" alt="Coffee Table">
+                    <div class="item-info">
+                        <h4>Coffee Table</h4>
+                        <p>₹15,920</p>
+                    </div>
+                </div>
+                
+                <div class="library-item" data-category="tables" data-model="dining_table" onclick="selectFurniture('dining_table')">
+                    <img src="{{ url_for('static', filename='images/furniture/dining-table.jpg') }}" alt="Dining Table">
+                    <div class="item-info">
+                        <h4>Dining Table</h4>
+                        <p>₹31,920</p>
+                    </div>
+                </div>
+                
+                <!-- Chairs -->
+                <div class="library-item" data-category="chairs" data-model="armchair" onclick="selectFurniture('armchair')">
+                    <img src="{{ url_for('static', filename='images/furniture/armchair.jpg') }}" alt="Armchair">
+                    <div class="item-info">
+                        <h4>Armchair</h4>
+                        <p>₹19,920</p>
+                    </div>
+                </div>
+                
+                <div class="library-item" data-category="chairs" data-model="dining_chair" onclick="selectFurniture('dining_chair')">
+                    <img src="{{ url_for('static', filename='images/furniture/dining-chair.jpg') }}" alt="Dining Chair">
+                    <div class="item-info">
+                        <h4>Dining Chair</h4>
+                        <p>₹7,120</p>
+                    </div>
+                </div>
+                
+                <!-- Add more furniture items -->
+            </div>
+            
+            <!-- Selected Item Preview -->
+            <div class="selected-preview" id="selectedPreview" style="display: none;">
+                <h4>Selected Item</h4>
+                <div class="preview-content">
+                    <img id="selectedImage" src="" alt="Selected">
+                    <div class="preview-details">
+                        <h5 id="selectedName">Modern Sofa</h5>
+                        <p id="selectedPrice">₹47,920</p>
+                        <button class="btn-primary" onclick="placeFurniture()">
+                            <i class="fas fa-cube"></i> Place in AR
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Room Analysis Panel -->
+    <div class="room-analysis-panel" id="roomAnalysisPanel">
+        <div class="panel-header">
+            <h3>Room Analysis</h3>
+            <button class="close-panel" onclick="toggleAnalysisPanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="panel-content">
+            <div class="analysis-section">
+                <h4>Room Dimensions</h4>
+                <div class="dimensions">
+                    <div class="dimension">
+                        <span>Width</span>
+                        <strong id="roomWidth">5.2 m</strong>
+                    </div>
+                    <div class="dimension">
+                        <span>Length</span>
+                        <strong id="roomLength">4.8 m</strong>
+                    </div>
+                    <div class="dimension">
+                        <span>Height</span>
+                        <strong id="roomHeight">2.7 m</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h4>Lighting Conditions</h4>
+                <div class="lighting-indicator">
+                    <div class="lighting-level">
+                        <span>Natural Light</span>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="lighting-level">
+                        <span>Artificial Light</span>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h4>AI Recommendations</h4>
+                <div class="recommendation-list">
+                    <div class="recommendation-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Add a centerpiece to the coffee table</span>
+                    </div>
+                    <div class="recommendation-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Consider floor lamps for corner lighting</span>
+                    </div>
+                    <div class="recommendation-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Use lighter curtains to enhance natural light</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toggle Analysis Button -->
+    <button class="toggle-analysis" onclick="toggleAnalysisPanel()">
+        <i class="fas fa-chart-bar"></i>
+    </button>
+</div>
+
+<script>
+let currentModel = null;
+let arActive = false;
+let selectedFurniture = null;
+
+function startAR() {
+    document.querySelector('.ar-placeholder').style.display = 'none';
+    document.getElementById('arControls').style.display = 'flex';
+    document.getElementById('arStatus').style.display = 'block';
+    
+    // Initialize AR session via ARViewer class
+    if (window.arViewer) {
+        window.arViewer.init();
+        document.getElementById('arCanvas').classList.add('active');
+        console.log('AR session started');
+        arActive = true;
+        
+        // Update status
+        setTimeout(() => {
+            document.getElementById('arStatus').querySelector('span').textContent = 'Room detected!';
+        }, 2000);
+    } else {
+        console.error("ARViewer instance not found");
+        alert("AR functionality is not ready. Please refresh the page.");
+    }
+}
+
+function stopAR() {
+    document.querySelector('.ar-placeholder').style.display = 'flex';
+    document.getElementById('arControls').style.display = 'none';
+    document.getElementById('arStatus').style.display = 'none';
+    document.getElementById('arCanvas').classList.remove('active');
+    arActive = false;
+    
+    // Stop AR session
+    if (window.arViewer) {
+        // Here we could add a stop method to ARViewer class if needed
+    }
+    console.log('AR session stopped');
+}
+
+function selectFurniture(modelId) {
+    selectedFurniture = modelId;
+    
+    // Show selected preview
+    const preview = document.getElementById('selectedPreview');
+    preview.style.display = 'block';
+    
+    // Update preview details
+    const selectedItem = document.querySelector(`[data-model="${modelId}"]`);
+    document.getElementById('selectedImage').src = selectedItem.querySelector('img').src;
+    document.getElementById('selectedName').textContent = selectedItem.querySelector('h4').textContent;
+    document.getElementById('selectedPrice').textContent = selectedItem.querySelector('p').textContent;
+    
+    // Highlight selected item
+    document.querySelectorAll('.library-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    selectedItem.classList.add('selected');
+}
+
+function placeFurniture() {
+    if (!arActive) {
+        alert('Please start AR first');
+        return;
+    }
+    
+    if (!selectedFurniture) {
+        alert('Please select a furniture item first');
+        return;
+    }
+    
+    // Here you would use AR.js to place the 3D model
+    console.log(`Placing ${selectedFurniture} in AR`);
+    
+    if (window.arViewer) {
+        // In a real app, you would pass the actual model path
+        window.arViewer.loadModel(selectedFurniture, `/static/models/${selectedFurniture}.glb`);
+    } else {
+        console.error("ARViewer instance not available");
+        alert("AR system error. Please refresh.");
+        return;
+    }
+    
+    // Show placement animation
+    const status = document.getElementById('arStatus');
+    status.querySelector('.status-indicator').classList.add('placing');
+    status.querySelector('span').textContent = 'Placing furniture...';
+    
+    setTimeout(() => {
+        status.querySelector('.status-indicator').classList.remove('placing');
+        status.querySelector('span').textContent = 'Furniture placed!';
+    }, 2000);
+}
+
+function rotateLeft() {
+    console.log('Rotating left');
+    if (window.arViewer) {
+        window.arViewer.rotateModel(0.1, 'y');
+    }
+}
+
+function rotateRight() {
+    console.log('Rotating right');
+    if (window.arViewer) {
+        window.arViewer.rotateModel(-0.1, 'y');
+    }
+}
+
+function scaleUp() {
+    console.log('Scaling up');
+    if (window.arViewer) {
+        window.arViewer.scaleModel(1.1);
+    }
+}
+
+function scaleDown() {
+    console.log('Scaling down');
+    if (window.arViewer) {
+        window.arViewer.scaleModel(0.9);
+    }
+}
+
+function captureAR() {
+    console.log('Capturing AR view');
+    // Implement screenshot logic
+    if (window.arViewer && window.arViewer.capture) {
+        window.arViewer.capture();
+    } else {
+        // Fallback or implementation if method missing
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'ar-capture.png';
+            link.href = dataURL;
+            link.click();
+        }
+    }
+}
+
+function toggleAnalysisPanel() {
+    const panel = document.getElementById('roomAnalysisPanel');
+    if (panel.style.right === '0px') {
+        panel.style.right = '-400px';
+    } else {
+        panel.style.right = '0';
+    }
+}
+
+// Category filtering
+document.querySelectorAll('.category-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const category = this.dataset.category;
+        document.querySelectorAll('.library-item').forEach(item => {
+            if (category === 'all' || item.dataset.category === category) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+
+<style media="max-width: 1px">
+/* Disabled style block to fix dark mode visibility */
+.ar-viewer {
+    padding: 80px 2rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+}
+
+.ar-header {
+    margin-bottom: 1.5rem;
+}
+
+.ar-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.ar-header p {
+    color: var(--text-secondary);
+}
+
+.ar-container {
+    display: flex;
+    gap: 2rem;
+    flex: 1;
+    min-height: 0;
+}
+
+.ar-canvas {
+    flex: 2;
+    background: #000; /* Changed from gradient to black for video handling */
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.ar-canvas.active {
+    background: transparent;
+}
+
+.ar-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    padding: 2rem;
+}
+
+.ar-placeholder i {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+}
+
+.ar-placeholder h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.ar-placeholder p {
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+.ar-controls {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1rem;
+    background: rgba(0,0,0,0.7);
+    padding: 1rem;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+.control-group {
+    display: flex;
+    gap: 0.5rem;
+    border-right: 1px solid rgba(255,255,255,0.3);
+    padding-right: 1rem;
+}
+
+.control-group:last-child {
+    border-right: none;
+    padding-right: 0;
+}
+
+.control-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: white;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.control-btn.capture {
+    background: var(--success-color);
+    color: white;
+}
+
+.control-btn.close {
+    background: var(--error-color);
+    color: white;
+}
+
+.ar-status {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 10;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    background: #4caf50;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.placing {
+    background: #ff9800;
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.furniture-library {
+    flex: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+}
+
+.furniture-library h3 {
+    margin-bottom: 1rem;
+}
+
+.library-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.category-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    background: transparent;
+    border-radius: 50px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.category-btn:hover,
+.category-btn.active {
+    background: var(--gradient-primary);
+    border-color: transparent;
+    color: white;
+}
+
+.library-items {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.library-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.library-item:hover {
+    background: var(--light-color);
+}
+
+.library-item.selected {
+    border-color: var(--primary-color);
+    background: var(--light-color);
+}
+
+.library-item img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.item-info h4 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.item-info p {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.selected-preview {
+    padding: 1rem;
+    background: var(--light-color);
+    border-radius: 15px;
+}
+
+.selected-preview h4 {
+    margin-bottom: 1rem;
+}
+
+.preview-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.preview-content img {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.preview-details h5 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.preview-details p {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.room-analysis-panel {
+    position: fixed;
+    top: 80px;
+    right: -400px;
+    width: 400px;
+    height: calc(100vh - 80px);
+    background: white;
+    box-shadow: var(--shadow-xl);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    padding: 1.5rem;
+    background: var(--gradient-dark); /* Changed to dark gradient for contrast */
+    color: var(--primary-color); /* Yellow Text */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.close-panel {
+    background: none;
+    border: none;
+    color: var(--primary-color); /* Yellow Close Button */
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.panel-content {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.analysis-section {
+    margin-bottom: 2rem;
+}
+
+.analysis-section h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.dimensions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.dimension {
+    text-align: center;
+    padding: 1rem;
+    background: var(--light-color);
+    border-radius: 10px;
+}
+
+.dimension span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.dimension strong {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.lighting-level {
+    margin-bottom: 1rem;
+}
+
+.lighting-level span {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar .progress {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 4px;
+}
+
+.recommendation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recommendation-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--light-color);
+    border-radius: 10px;
+}
+
+.recommendation-item i {
+    color: var(--success-color);
+}
+
+.toggle-analysis {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background: var(--gradient-primary); /* Yellow */
+    color: #000; /* Black icon for contrast */
+    cursor: pointer;
+    box-shadow: 0 4px 14px 0 rgba(251, 191, 36, 0.5); /* Yellow glow */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 999;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-analysis:hover {
+    transform: scale(1.1) rotate(10deg);
+    background: #F59E0B; /* Darker yellow on hover */
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+}
+
+@media (max-width: 768px) {
+    .ar-container {
+        flex-direction: column;
+    }
+    
+    .furniture-library {
+        min-width: auto;
+    }
+    
+    .room-analysis-panel {
+        width: 100%;
+        right: -100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/three-ar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ar-viewer.js') }}"></script>
+<script>
+    // Initialize AR when page loads
+    window.addEventListener('load', function() {
+        console.log("Loading AR scripts...");
+        // Ensure ARViewer class is available
+        if (typeof ARViewer !== 'undefined') {
+            window.arViewer = new ARViewer();
+            console.log("ARViewer initialized");
+        } else {
+            console.error("ARViewer class not found");
+        }
+    });
+</script>
+{% endblock %}

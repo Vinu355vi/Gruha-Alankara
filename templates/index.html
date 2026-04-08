@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <p class="hero-tagline">AI-POWERED INTERIOR DESIGN</p>
+        <h1 class="hero-title">Transform Your Space Intelligently.</h1>
+        <p>
+            Upload a photo of your room and let our AI generate stunning interior design concepts tailored to your personal style and budget.
+        </p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('register') }}" class="btn btn-accent btn-lg">Get Started Free</a>
+            <a href="#features" class="btn btn-primary btn-lg">Learn More</a>
+        </div>
+    </div>
+    <div class="hero-image">
+        <!-- Using a placeholder initially, replaced by user content later -->
+        <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80" 
+             alt="Modern Living Room Design">
+    </div>
+</section>
+
+<section id="features" class="features" style="padding: 4rem 5%;">
+    <div class="text-center mb-2">
+        <h2>Why Choose Gruha Alankara?</h2>
+        <p>Experience the future of home renovation.</p>
+    </div>
+    
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="stat-icon"><i class="fas fa-magic"></i></div>
+            <h3>AI Generation</h3>
+            <p>Our advanced algorithms analyze your room's geometry and lighting to suggest perfect furniture layouts and color schemes.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="stat-icon"><i class="fas fa-vr-cardboard"></i></div>
+            <h3>AR Visualization</h3>
+            <p>Don't just imagine it. See exactly how new furniture will look in your space with our Augmented Reality viewer.</p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="stat-icon"><i class="fas fa-palette"></i></div>
+            <h3>Style Matching</h3>
+            <p>From Minimalist to Bohemian, our AI understands design languages and recommends decor that fits your taste.</p>
+        </div>
+        
+         <div class="feature-card">
+            <div class="stat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+            <h3>Budget Planning</h3>
+            <p>Get reliable cost estimates for your renovation projects and find furniture that matches your budget.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
