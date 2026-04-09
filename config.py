@@ -2,10 +2,21 @@ import os
 from datetime import timedelta
 
 class Config:
+    _IS_VERCEL = os.environ.get('VERCEL') == '1'
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'gruha-alankara-secret-key'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///gruha_alankara.db'
+
+    # Vercel serverless runtime is read-only except /tmp.
+    if os.environ.get('DATABASE_URL'):
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    elif _IS_VERCEL:
+        SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/gruha_alankara.db'
+    else:
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///gruha_alankara.db'
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+    UPLOAD_FOLDER = '/tmp/uploads' if _IS_VERCEL else os.path.join(_BASE_DIR, 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     
@@ -14,7 +25,7 @@ class Config:
     SESSION_PERMANENT = True
     
     # AR Configuration
-    AR_MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models/ar_models')
+    AR_MODEL_PATH = os.path.join(_BASE_DIR, 'models/ar_models')
     
     # AI Model Configuration
     AI_MODEL_CONFIG = {
