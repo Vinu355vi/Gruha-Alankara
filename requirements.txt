@@ -8,3 +8,4 @@ opencv-python==4.10.0.84
 scikit-learn==1.4.2
 Werkzeug==2.3.7
 python-dotenv==1.0.0
+fastapi==0.117.1
