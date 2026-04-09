@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,6 +14,7 @@ app.config.from_object('config.Config')
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+_db_initialized = False
 
 # Database Models
 class User(UserMixin, db.Model):
@@ -60,17 +61,37 @@ class Design(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+def initialize_database():
+    global _db_initialized
+    if _db_initialized:
+        return
+    with app.app_context():
+        db.create_all()
+    _db_initialized = True
+
+initialize_database()
+
 # Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route('/favicon.ico')
+def favicon():
+    return Response(status=204)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    initialize_database()
     if request.method == 'POST':
-        data = request.get_json()
-        user = User.query.filter_by(email=data['email']).first()
-        if user and check_password_hash(user.password_hash, data['password']):
+        data = request.get_json(silent=True) or {}
+        email = data.get('email')
+        password = data.get('password')
+        if not email or not password:
+            return jsonify({'success': False, 'message': 'Email and password are required'}), 400
+
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password_hash, password):
             login_user(user)
             return jsonify({'success': True, 'redirect': url_for('dashboard')})
         return jsonify({'success': False, 'message': 'Invalid credentials'})
@@ -84,16 +105,23 @@ def logout():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    initialize_database()
     if request.method == 'POST':
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
+        email = data.get('email')
+        username = data.get('username')
+        password = data.get('password')
+
+        if not email or not username or not password:
+            return jsonify({'success': False, 'message': 'Username, email and password are required'}), 400
         
-        if User.query.filter_by(email=data['email']).first():
+        if User.query.filter_by(email=email).first():
             return jsonify({'success': False, 'message': 'Email already registered'})
         
-        hashed_password = generate_password_hash(data['password'])
+        hashed_password = generate_password_hash(password)
         user = User(
-            username=data['username'],
-            email=data['email'],
+            username=username,
+            email=email,
             password_hash=hashed_password
         )
         
